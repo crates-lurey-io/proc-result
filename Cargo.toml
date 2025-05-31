@@ -1,7 +1,17 @@
 [package]
 name = "proc-result"
+description = "A tiny cross-platform library containing exit status and code types"
+repository = "http://crates.lurey.io/proc-result"
+license = "MIT"
 version = "0.1.0"
 edition = "2024"
+keywords = ["cli", "exit-codes", "sysexit"]
+categories = [
+  "command-line-interface",
+  "development-tools::testing",
+  "no-std",
+  "os",
+]
 
 [lints.clippy]
 pedantic = "deny"
