@@ -2,6 +2,10 @@
 
 A tiny cross-platform library containing exit status and code types.
 
+[![Rust](https://github.com/crates-lurey-io/proc-result/actions/workflows/rust.yml/badge.svg)](https://github.com/crates-lurey-io/proc-result/actions/workflows/rust.yml)
+[![Docs](https://github.com/crates-lurey-io/proc-result/actions/workflows/docs.yml/badge.svg)](https://github.com/crates-lurey-io/proc-result/actions/workflows/docs.yml)
+[![codecov](https://codecov.io/gh/crates-lurey-io/proc-result/graph/badge.svg?token=Z3VUWA3WYY)](https://codecov.io/gh/crates-lurey-io/proc-result)
+
 Unlike `std::process`, this crate does not require the standard library[^1], nor
 `libc`, and can create and interpret exit codes of non-current platforms. For
 example, on Windows, it can read and interpret exit codes that may have been
