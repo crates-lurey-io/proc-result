@@ -64,14 +64,6 @@ impl WaitState {
         }
     }
 
-    /// A copy of the Unix `WIFEXITED(status)` macro.
-    #[allow(non_snake_case)]
-    #[inline]
-    #[must_use]
-    const fn WSTOPSIG(status: i32) -> i32 {
-        (status >> 8) & 0xFF
-    }
-
     /// Represents the stopped status bit.
     const _WSTOPPED: i32 = 0x7F;
 
@@ -163,19 +155,6 @@ impl WaitState {
     #[must_use]
     pub const fn w_term_sig(status: i32) -> u8 {
         Self::WTERMSIG(status) as u8
-    }
-
-    /// Returns the signal number that caused the process to stop.
-    ///
-    /// Equivalent to the Unix `WSTOPSIG(status)` macro.
-    ///
-    /// # Panics
-    ///
-    /// If [`is_w_stopped`](Self::is_w_stopped) returns `false`, this function will panic.
-    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-    #[must_use]
-    pub const fn w_stop_sig(status: i32) -> u8 {
-        Self::WSTOPSIG(status) as u8
     }
 
     /// Returns `true` if the status indicates a core dump occurred.
@@ -287,7 +266,7 @@ mod tests {
 #[cfg(all(test, unix))]
 mod libc_verification_tests {
     use super::*;
-    use libc::{WCOREDUMP, WEXITSTATUS, WIFEXITED, WIFSIGNALED, WSTOPSIG, WTERMSIG};
+    use libc::{WCOREDUMP, WEXITSTATUS, WIFEXITED, WIFSIGNALED, WTERMSIG};
 
     #[test]
     fn test_wifexited_true() {
@@ -329,12 +308,6 @@ mod libc_verification_tests {
     fn test_wtermsig() {
         assert_eq!(WTERMSIG(0x0000_0001), 1);
         assert_eq!(WaitState::w_term_sig(0x0000_0001), 1);
-    }
-
-    #[test]
-    fn test_wstopsig() {
-        assert_eq!(WaitState::w_stop_sig(0x0000_007F), 0);
-        assert_eq!(WSTOPSIG(0x0000_007F), 0);
     }
 
     #[test]
