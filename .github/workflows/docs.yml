@@ -45,7 +45,7 @@ jobs:
           RUSTDOCFLAGS: "-D warnings"
 
       - name: Add redirect
-        run: echo '<meta http-equiv="refresh" content="0;url=doc/target/index.html">' > proc_result/index.html
+        run: echo '<meta http-equiv="refresh" content="0;url=proc_result/index.html">' > target/doc/index.html
 
       - name: Remove lock file
         run: rm target/doc/.lock
