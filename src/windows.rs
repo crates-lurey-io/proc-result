@@ -8,7 +8,11 @@ use core::fmt::Display;
 
 /// A Windows-specific exit code.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct ExitCode(u32);
 
 impl ExitCode {
@@ -106,7 +110,13 @@ impl Display for ExitCode {
 #[cfg(all(windows, feature = "std"))]
 impl From<&std::process::ExitStatus> for ExitCode {
     fn from(status: &std::process::ExitStatus) -> ExitCode {
-        ExitCode::from_raw(status.code().expect("cannot fail on Windows"))
+        ExitCode::from_raw(
+            status
+                .code()
+                .expect("cannot fail on Windows")
+                .try_into()
+                .unwrap(),
+        )
     }
 }
 
@@ -146,27 +156,27 @@ mod tests {
     #[test]
     #[cfg(all(feature = "std", windows))]
     fn test_from_exit_status() {
+        use std::os::windows::process::ExitStatusExt;
         use std::process::ExitStatus;
 
         // Simulate a successful exit status
         let success_status = ExitStatus::from_raw(0);
-        let success_code: ExitCode = success_status.into();
+        let success_code: ExitCode = (&success_status).into();
         assert!(success_code.is_success());
         assert_eq!(success_code.to_raw(), 0);
 
         // Simulate a failure exit status
         let failure_status = ExitStatus::from_raw(1);
-        let failure_code: ExitCode = failure_status.into();
+        let failure_code: ExitCode = (&failure_status).into();
         assert!(failure_code.is_failure());
         assert_eq!(failure_code.to_raw(), 1);
     }
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(all(test, windows, feature = "serde"))]
 mod serde_tests {
     use super::*;
     use serde_json;
-    use std::os::windows::process::ExitStatusExt;
 
     #[test]
     fn test_serde() {

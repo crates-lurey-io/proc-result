@@ -36,13 +36,11 @@ Unix exit code from a raw integer:
 ```rust
 use proc_result::unix::ExitCode;
 
-fn main() {
-    let code = ExitCode::from_raw(1);
-    if code.is_success() {
-        println!("Command succeeded!");
-    } else {
-        eprintln!("Command failed with exit code: {}", code);
-    }
+let code = ExitCode::from_raw(1);
+if code.is_success() {
+    println!("Command succeeded!");
+} else {
+    eprintln!("Command failed with exit code: {}", code);
 }
 ```
 

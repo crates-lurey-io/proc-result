@@ -1,5 +1,3 @@
-use std::os::unix::process::ExitStatusExt;
-
 use super::{ExitCode, Signal, WaitState};
 
 /// A Unix-like wait status.
@@ -8,7 +6,11 @@ use super::{ExitCode, Signal, WaitState};
 /// this struct encapsulates that information and can separate the exit code from the signal that
 /// caused the termination, or whether the process was stopped or continued.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct WaitStatus(i32);
 
 impl WaitStatus {
@@ -45,18 +47,6 @@ impl WaitStatus {
         matches!(self.state(), WaitState::Exited { .. })
     }
 
-    /// Returns `true` if the process was stopped by a signal.
-    #[must_use]
-    pub const fn is_stopped(&self) -> bool {
-        matches!(self.state(), WaitState::Stopped { .. })
-    }
-
-    /// Returns `true` if the process was continued after being stopped.
-    #[must_use]
-    pub const fn is_continued(&self) -> bool {
-        matches!(self.state(), WaitState::Continued)
-    }
-
     /// Returns `true` if the process was terminated by a signal.
     #[must_use]
     pub const fn is_signaled(&self) -> bool {
@@ -76,9 +66,8 @@ impl WaitStatus {
     #[must_use]
     pub const fn signal(&self) -> Option<Signal> {
         match self.state() {
-            WaitState::Stopped { signal, .. } | WaitState::Signaled { signal, .. } => Some(signal),
-            WaitState::Continued => Some(Signal::CONTINUE),
-            WaitState::Exited { exit_code: _ } => None,
+            WaitState::Signaled { signal, .. } => Some(signal),
+            _ => None,
         }
     }
 }
@@ -89,6 +78,7 @@ impl From<&std::process::ExitStatus> for WaitStatus {
         if let Some(code) = status.code() {
             WaitStatus::from_raw(code)
         } else {
+            use std::os::unix::process::ExitStatusExt;
             WaitStatus::from_raw(status.into_raw())
         }
     }
@@ -97,6 +87,7 @@ impl From<&std::process::ExitStatus> for WaitStatus {
 #[cfg(all(unix, feature = "std"))]
 impl From<&WaitStatus> for std::process::ExitStatus {
     fn from(status: &WaitStatus) -> Self {
+        use std::os::unix::process::ExitStatusExt;
         std::process::ExitStatus::from_raw(status.to_raw())
     }
 }

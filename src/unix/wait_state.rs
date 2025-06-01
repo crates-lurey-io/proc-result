@@ -23,14 +23,8 @@ pub enum WaitState {
         core_dump: bool,
     },
 
-    /// Indicates that the process was stopped (paused) by a signal.
-    Stopped {
-        /// The signal that caused the process to stop.
-        signal: Signal,
-    },
-
-    /// Indicates that the process was continued after being stopped.
-    Continued,
+    /// Indicates a wait status code that is not recognized or supported.
+    Unsupported(i32),
 }
 
 impl WaitState {
@@ -46,14 +40,8 @@ impl WaitState {
                 signal: Signal::from_raw(Self::w_term_sig(status)),
                 core_dump: Self::is_w_coredump(status),
             }
-        } else if Self::is_w_stopped(status) {
-            Self::Stopped {
-                signal: Signal::from_raw(Self::w_stop_sig(status)),
-            }
-        } else if Self::is_w_continued(status) {
-            Self::Continued
         } else {
-            unreachable!()
+            Self::Unsupported(status)
         }
     }
 
@@ -72,8 +60,7 @@ impl WaitState {
             Self::Signaled { signal, core_dump } => {
                 (signal.to_raw() as i32) | if *core_dump { 0x80 } else { 0 }
             }
-            Self::Stopped { signal } => 0x7F | ((signal.to_raw() as i32) << 8),
-            Self::Continued => 0x7F,
+            Self::Unsupported(code) => *code,
         }
     }
 
@@ -96,28 +83,12 @@ impl WaitState {
         status & 0xFF
     }
 
-    /// A copy of the Unix `WIFCONTINUED(status)` macro.
-    #[allow(non_snake_case)]
-    #[inline]
-    #[must_use]
-    const fn WIFCONTINUED(status: i32) -> bool {
-        Self::_WSTATUS(status) == Self::_WSTOPPED && Self::WSTOPSIG(status) == 0x13
-    }
-
     /// A copy of the Unix `WIFSIGNALED(status)` macro.
     #[allow(non_snake_case)]
     #[inline]
     #[must_use]
     const fn WIFSIGNALED(status: i32) -> bool {
         Self::_WSTATUS(status) != Self::_WSTOPPED && Self::_WSTATUS(status) != 0
-    }
-
-    /// A copy of the Unix `WIFSTOPPED(status)` macro.
-    #[allow(non_snake_case)]
-    #[inline]
-    #[must_use]
-    const fn WIFSTOPPED(status: i32) -> bool {
-        Self::_WSTATUS(status) == Self::_WSTOPPED && Self::WSTOPSIG(status) != 0x13
     }
 
     /// A copy of the Unix `WTERMSIG(status)` macro.
@@ -194,14 +165,6 @@ impl WaitState {
         Self::WTERMSIG(status) as u8
     }
 
-    /// Returns `true` if the status indicates that the process was stopped by a signal.
-    ///
-    /// Equivalent to the Unix `WIFSTOPPED(status)` macro.
-    #[must_use]
-    pub const fn is_w_stopped(status: i32) -> bool {
-        Self::WIFSTOPPED(status)
-    }
-
     /// Returns the signal number that caused the process to stop.
     ///
     /// Equivalent to the Unix `WSTOPSIG(status)` macro.
@@ -213,14 +176,6 @@ impl WaitState {
     #[must_use]
     pub const fn w_stop_sig(status: i32) -> u8 {
         Self::WSTOPSIG(status) as u8
-    }
-
-    /// Returns `true` if the status indicates that the process was continued.
-    ///
-    /// Equivalent to the Unix `WIFCONTINUED(status)` macro.
-    #[must_use]
-    pub const fn is_w_continued(status: i32) -> bool {
-        Self::WIFCONTINUED(status)
     }
 
     /// Returns `true` if the status indicates a core dump occurred.
@@ -326,47 +281,13 @@ mod tests {
         };
         assert_eq!(status.to_raw(), 0x0000_0081);
     }
-
-    #[test]
-    fn test_from_raw_stopped() {
-        let status = WaitState::from_raw(0x0000_007F);
-        assert_eq!(
-            status,
-            WaitState::Stopped {
-                signal: Signal::from_raw(0),
-            }
-        );
-    }
-
-    #[test]
-    fn test_to_raw_stopped() {
-        let status = WaitState::Stopped {
-            signal: Signal::from_raw(0),
-        };
-        assert_eq!(status.to_raw(), 0x0000_007F);
-    }
-
-    #[test]
-    fn test_from_raw_continued() {
-        let status = WaitState::from_raw(0x0000_137F);
-        assert_eq!(status, WaitState::Continued);
-    }
-
-    #[test]
-    fn test_to_raw_continued() {
-        let status = WaitState::Continued;
-        assert_eq!(status.to_raw(), 0x7F);
-    }
 }
 
 // Tests that compare the behavior of the `UnixWaitIf` struct with the libc macros.
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod libc_verification_tests {
     use super::*;
-    use libc::{
-        WCOREDUMP, WEXITSTATUS, WIFCONTINUED, WIFEXITED, WIFSIGNALED, WIFSTOPPED, WSTOPSIG,
-        WTERMSIG,
-    };
+    use libc::{WCOREDUMP, WEXITSTATUS, WIFEXITED, WIFSIGNALED, WSTOPSIG, WTERMSIG};
 
     #[test]
     fn test_wifexited_true() {
@@ -411,33 +332,9 @@ mod libc_verification_tests {
     }
 
     #[test]
-    fn test_wifstopped_true() {
-        assert!(WIFSTOPPED(0x0000_007F));
-        assert!(WaitState::is_w_stopped(0x0000_007F));
-    }
-
-    #[test]
-    fn test_wifstopped_false() {
-        assert!(!WIFSTOPPED(0x0000_0000));
-        assert!(!WaitState::is_w_stopped(0x0000_0000));
-    }
-
-    #[test]
     fn test_wstopsig() {
         assert_eq!(WaitState::w_stop_sig(0x0000_007F), 0);
         assert_eq!(WSTOPSIG(0x0000_007F), 0);
-    }
-
-    #[test]
-    fn test_wifcontinued_true() {
-        assert!(WIFCONTINUED(0x0000_137F));
-        assert!(WaitState::is_w_continued(0x0000_137F));
-    }
-
-    #[test]
-    fn test_wifcontinued_false() {
-        assert!(!WIFCONTINUED(0x0000_0000));
-        assert!(!WaitState::is_w_continued(0x0000_0000));
     }
 
     #[test]
