@@ -55,10 +55,7 @@ jobs:
         tool: cargo-llvm-cov, nextest
 
     - name: Test
-      run: |
-        cargo llvm-cov --no-report nextest
-        cargo llvm-cov --no-report --doc
-        cargo llvm-cov report --doctests --lcov --output-path lcov.info
+      run: cargo llvm-cov nextest --no-fail-fast
 
     - name: Upload Coverage
       if: matrix.os == 'ubuntu-latest'
