@@ -1,5 +1,3 @@
-use std::os::unix::process::ExitStatusExt;
-
 use super::{ExitCode, Signal, WaitState};
 
 /// A Unix-like wait status.
@@ -80,6 +78,7 @@ impl From<&std::process::ExitStatus> for WaitStatus {
         if let Some(code) = status.code() {
             WaitStatus::from_raw(code)
         } else {
+            use std::os::unix::process::ExitStatusExt;
             WaitStatus::from_raw(status.into_raw())
         }
     }
@@ -88,6 +87,7 @@ impl From<&std::process::ExitStatus> for WaitStatus {
 #[cfg(all(unix, feature = "std"))]
 impl From<&WaitStatus> for std::process::ExitStatus {
     fn from(status: &WaitStatus) -> Self {
+        use std::os::unix::process::ExitStatusExt;
         std::process::ExitStatus::from_raw(status.to_raw())
     }
 }
