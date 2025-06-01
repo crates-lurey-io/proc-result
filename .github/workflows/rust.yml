@@ -60,6 +60,7 @@ jobs:
         cargo llvm-cov report --doctests --lcov --output-path lcov.info
 
     - name: Upload Coverage
+      if: matrix.os == 'ubuntu-latest'
       uses: codecov/codecov-action@v3
       with:
         files: lcov.info
