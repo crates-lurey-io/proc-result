@@ -14,6 +14,7 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os:
           - ubuntu-latest
@@ -51,7 +52,7 @@ jobs:
     - name: Install Tools
       uses: taiki-e/install-action@v2
       with:
-        tool: cargo-bininstall, cargo-llvm-cov, nextest
+        tool: cargo-llvm-cov, nextest
 
     - name: Test
       run: |
