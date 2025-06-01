@@ -110,7 +110,13 @@ impl Display for ExitCode {
 #[cfg(all(windows, feature = "std"))]
 impl From<&std::process::ExitStatus> for ExitCode {
     fn from(status: &std::process::ExitStatus) -> ExitCode {
-        ExitCode::from_raw(status.code().expect("cannot fail on Windows"))
+        ExitCode::from_raw(
+            status
+                .code()
+                .expect("cannot fail on Windows")
+                .try_into()
+                .unwrap(),
+        )
     }
 }
 
