@@ -40,7 +40,7 @@ jobs:
         run: cargo clean --doc
 
       - name: Build docs
-        run: cargo doc --no-deps --warnings-as-errors
+        run: cargo doc --no-deps
         env:
           RUSTDOCFLAGS: "-D warnings"
 
