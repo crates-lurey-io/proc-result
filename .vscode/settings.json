@@ -1,0 +1,6 @@
+{
+  "rust-analyzer.check.extraArgs": [
+    "--workspace --all-targets --all-features -- -D warnings"
+  ],
+  "rust-analyzer.check.command": "clippy"
+}
