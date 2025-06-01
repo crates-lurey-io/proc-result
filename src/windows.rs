@@ -8,7 +8,11 @@ use core::fmt::Display;
 
 /// A Windows-specific exit code.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct ExitCode(u32);
 
 impl ExitCode {
@@ -162,7 +166,7 @@ mod tests {
     }
 }
 
-#[cfg(all(test, feature = "serde"))]
+#[cfg(all(test, windows, feature = "serde"))]
 mod serde_tests {
     use super::*;
     use serde_json;

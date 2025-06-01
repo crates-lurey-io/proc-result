@@ -8,7 +8,11 @@ use super::{ExitCode, Signal, WaitState};
 /// this struct encapsulates that information and can separate the exit code from the signal that
 /// caused the termination, or whether the process was stopped or continued.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct WaitStatus(i32);
 
 impl WaitStatus {

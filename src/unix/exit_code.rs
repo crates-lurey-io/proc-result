@@ -4,7 +4,11 @@ use crate::raw::RawExitCode;
 
 /// A Unix-like exit code.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct ExitCode(u8);
 
 impl ExitCode {

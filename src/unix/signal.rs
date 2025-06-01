@@ -4,7 +4,11 @@ use core::fmt::Display;
 ///
 /// Represents a signal that can be sent to or received by processes on Unix-like systems.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(transparent)
+)]
 pub struct Signal(u8);
 
 impl Signal {
