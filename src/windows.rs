@@ -118,7 +118,7 @@ impl From<&std::process::ExitStatus> for ExitCode {
 impl From<&ExitCode> for std::process::ExitStatus {
     fn from(code: &ExitCode) -> Self {
         use std::os::windows::process::ExitStatusExt;
-        std::process::ExitStatus::from_raw(code.to_raw() as i32)
+        std::process::ExitStatus::from_raw(code.to_raw())
     }
 }
 
@@ -155,13 +155,13 @@ mod tests {
 
         // Simulate a successful exit status
         let success_status = ExitStatus::from_raw(0);
-        let success_code: ExitCode = success_status.into();
+        let success_code: ExitCode = (&success_status).into();
         assert!(success_code.is_success());
         assert_eq!(success_code.to_raw(), 0);
 
         // Simulate a failure exit status
         let failure_status = ExitStatus::from_raw(1);
-        let failure_code: ExitCode = failure_status.into();
+        let failure_code: ExitCode = (&failure_status).into();
         assert!(failure_code.is_failure());
         assert_eq!(failure_code.to_raw(), 1);
     }
