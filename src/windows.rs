@@ -118,7 +118,7 @@ impl From<&std::process::ExitStatus> for ExitCode {
 impl From<&ExitCode> for std::process::ExitStatus {
     fn from(code: &ExitCode) -> Self {
         use std::os::windows::process::ExitStatusExt;
-        std::process::ExitStatus::from_raw(code.to_raw())
+        std::process::ExitStatus::from_raw(code.to_raw() as i32)
     }
 }
 
@@ -150,6 +150,7 @@ mod tests {
     #[test]
     #[cfg(all(feature = "std", windows))]
     fn test_from_exit_status() {
+        use std::os::windows::process::ExitStatusExt;
         use std::process::ExitStatus;
 
         // Simulate a successful exit status
@@ -170,7 +171,6 @@ mod tests {
 mod serde_tests {
     use super::*;
     use serde_json;
-    use std::os::windows::process::ExitStatusExt;
 
     #[test]
     fn test_serde() {

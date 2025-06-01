@@ -284,7 +284,7 @@ mod tests {
 }
 
 // Tests that compare the behavior of the `UnixWaitIf` struct with the libc macros.
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod libc_verification_tests {
     use super::*;
     use libc::{WCOREDUMP, WEXITSTATUS, WIFEXITED, WIFSIGNALED, WSTOPSIG, WTERMSIG};
