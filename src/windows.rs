@@ -108,8 +108,8 @@ impl Display for ExitCode {
 }
 
 #[cfg(all(windows, feature = "std"))]
-impl From<&std::process::ExitStatus> for ExitCode {
-    fn from(status: &std::process::ExitStatus) -> ExitCode {
+impl From<std::process::ExitStatus> for ExitCode {
+    fn from(status: std::process::ExitStatus) -> ExitCode {
         ExitCode::from_raw(
             status
                 .code()
@@ -121,8 +121,8 @@ impl From<&std::process::ExitStatus> for ExitCode {
 }
 
 #[cfg(all(windows, feature = "std"))]
-impl From<&ExitCode> for std::process::ExitStatus {
-    fn from(code: &ExitCode) -> Self {
+impl From<ExitCode> for std::process::ExitStatus {
+    fn from(code: ExitCode) -> Self {
         use std::os::windows::process::ExitStatusExt;
         std::process::ExitStatus::from_raw(code.to_raw())
     }
