@@ -26,7 +26,7 @@ mod doc_tests {
 /// An exit code or exit state returned by a program.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[non_exhaustive]
-pub enum Error {
+pub enum ProcResult {
     /// An unclassified exit status on a Unix platform.
     Unix(unix::WaitStatus),
 
@@ -34,52 +34,62 @@ pub enum Error {
     Windows(windows::ExitCode),
 }
 
-#[cfg(feature = "std")]
-impl Display for Error {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            Error::Unix(status) => write!(f, "Unix exit status: {}", status.to_raw()),
-            Error::Windows(code) => write!(f, "Windows exit code: {}", code.to_raw()),
+impl ProcResult {
+    /// Returns a result that is `Ok` if the exit code or status indicates a success.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Self` if not [`ProcResult::is_success`].
+    pub fn ok(&self) -> Result<(), Self> {
+        if self.is_success() {
+            Ok(())
+        } else {
+            Err(*self)
         }
+    }
+
+    /// Returns whether the process terminated successfully.
+    #[must_use]
+    pub fn is_success(&self) -> bool {
+        match self {
+            ProcResult::Unix(status) => status.exit_code().is_some_and(|code| code.is_success()),
+            ProcResult::Windows(code) => code.is_success(),
+        }
+    }
+
+    /// Returns whether the process did not terminate successfully.
+    #[must_use]
+    pub fn is_failure(&self) -> bool {
+        !self.is_success()
     }
 }
 
 #[cfg(feature = "std")]
-impl std::error::Error for Error {}
-
-/// A possible result of running and waiting for a process to terminate.
-#[cfg(feature = "std")]
-pub type ProcResult<T> = std::result::Result<T, Error>;
-
-/// A trait that converts a result of running a process into a [`ProcResult`].
-#[cfg(feature = "std")]
-pub trait ToProcResult<T> {
-    /// Converts the current result of running a process to a [`ProcResult`].
-    ///
-    /// # Errors
-    ///
-    /// If the result was a non-zero exit code, returns [`Error`].
-    fn to_proc_result(&self) -> ProcResult<T>;
+impl Display for ProcResult {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Self::Unix(status) => write!(f, "Unix exit status: {}", status.to_raw()),
+            Self::Windows(code) => write!(f, "Windows exit code: {}", code.to_raw()),
+        }
+    }
 }
 
+impl core::error::Error for ProcResult {}
+
 #[cfg(feature = "std")]
-impl ToProcResult<()> for std::process::ExitStatus {
+impl From<std::process::ExitStatus> for ProcResult {
     #[allow(unreachable_code)]
-    fn to_proc_result(&self) -> ProcResult<()> {
-        if self.success() {
-            Ok(())
-        } else {
-            #[cfg(unix)]
-            {
-                let err: unix::WaitStatus = self.into();
-                return Err(Error::Unix(err));
-            }
-            #[cfg(windows)]
-            {
-                let err: windows::ExitCode = self.into();
-                return Err(Error::Windows(err));
-            }
-            panic!("Cannot convert exit status to error on this platform");
+    fn from(status: std::process::ExitStatus) -> Self {
+        #[cfg(unix)]
+        {
+            let err: unix::WaitStatus = status.into();
+            return Self::Unix(err);
         }
+        #[cfg(windows)]
+        {
+            let err: windows::ExitCode = status.into();
+            return Self::Windows(err);
+        }
+        panic!("Cannot convert exit status to error on this platform");
     }
 }

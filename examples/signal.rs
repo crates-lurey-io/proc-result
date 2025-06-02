@@ -1,4 +1,4 @@
-use proc_result::ToProcResult;
+use proc_result::ProcResult;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut child = std::process::Command::new("examples/hang_forever.sh").spawn()?;
@@ -12,12 +12,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .arg("-9")
             .arg(pid.to_string())
             .status();
-        println!("Done");
     });
 
     println!("Waiting for process to end");
-    child.wait()?.to_proc_result()?;
+    let result: ProcResult = child.wait()?.into();
+    result.ok()?;
 
+    // Will never happen.
     println!("Done!");
     Ok(())
 }

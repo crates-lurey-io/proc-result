@@ -73,8 +73,8 @@ impl WaitStatus {
 }
 
 #[cfg(all(unix, feature = "std"))]
-impl From<&std::process::ExitStatus> for WaitStatus {
-    fn from(status: &std::process::ExitStatus) -> Self {
+impl From<std::process::ExitStatus> for WaitStatus {
+    fn from(status: std::process::ExitStatus) -> Self {
         if let Some(code) = status.code() {
             WaitStatus::from_raw(code)
         } else {
@@ -85,8 +85,8 @@ impl From<&std::process::ExitStatus> for WaitStatus {
 }
 
 #[cfg(all(unix, feature = "std"))]
-impl From<&WaitStatus> for std::process::ExitStatus {
-    fn from(status: &WaitStatus) -> Self {
+impl From<WaitStatus> for std::process::ExitStatus {
+    fn from(status: WaitStatus) -> Self {
         use std::os::unix::process::ExitStatusExt;
         std::process::ExitStatus::from_raw(status.to_raw())
     }

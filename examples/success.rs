@@ -1,8 +1,9 @@
-use proc_result::ToProcResult;
+use proc_result::ProcResult;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    std::process::Command::new("examples/exit_code_0.sh")
+    let result: ProcResult = std::process::Command::new("examples/exit_code_0.sh")
         .status()?
-        .to_proc_result()?;
+        .into();
+    result.ok()?;
     Ok(())
 }
