@@ -46,7 +46,7 @@ dependencies = [
 
 [[package]]
 name = "proc-result"
-version = "0.2.0"
+version = "0.2.0+1"
 dependencies = [
  "libc",
  "num-traits",

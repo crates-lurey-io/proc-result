@@ -16,19 +16,22 @@ recorded from a Linux process, or vice versa.
 
 ## Usage
 
-Most users of the crate will use the `ToProcResult` trait, which converts the
-result a run of a subprocess to a `ProcResult`, either a successful or an error
-explaining what exit code or (on Unix platforms) the signal the subprocess was
-prematurely terminated with, and is constructed from a
+Most users of the crate will use the `ProcResult` enum, which represents the
+result a run of a explaining what exit code or (on Unix platforms) the signal
+the subprocess was prematurely terminated with, and is constructed from a
 `std::process::ExitStatus`:
 
 ```rust
-use proc_result::ToProcResult;
+use proc_result::ProcResult;
 use std::error::Error;
 use std::process::Command;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let result = Command::new("ls").status()?.to_proc_result()?;
+    let result: ProcResult = Command::new("ls").status()?.into();
+
+    // Ensures exit code 0.
+    result.ok()?;
+
     Ok(())
 }
 ```
