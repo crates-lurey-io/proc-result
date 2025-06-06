@@ -5,7 +5,7 @@ use super::{ExitCode, Signal, WaitState};
 /// On Unix-like systems, processes can terminate with a combination of exit codes and signals;
 /// this struct encapsulates that information and can separate the exit code from the signal that
 /// caused the termination, or whether the process was stopped or continued.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),

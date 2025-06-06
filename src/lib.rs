@@ -64,6 +64,20 @@ impl ProcResult {
     }
 }
 
+#[cfg(all(feature = "std", unix))]
+impl Default for ProcResult {
+    fn default() -> Self {
+        Self::Unix(unix::WaitStatus::default())
+    }
+}
+
+#[cfg(all(feature = "std", windows))]
+impl Default for ProcResult {
+    fn default() -> Self {
+        Self::Windows(windows::ExitCode::default())
+    }
+}
+
 #[cfg(feature = "std")]
 impl Display for ProcResult {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
@@ -76,20 +90,33 @@ impl Display for ProcResult {
 
 impl core::error::Error for ProcResult {}
 
-#[cfg(feature = "std")]
+#[cfg(all(feature = "std", unix))]
 impl From<std::process::ExitStatus> for ProcResult {
     #[allow(unreachable_code)]
     fn from(status: std::process::ExitStatus) -> Self {
-        #[cfg(unix)]
-        {
-            let err: unix::WaitStatus = status.into();
-            return Self::Unix(err);
-        }
-        #[cfg(windows)]
-        {
-            let err: windows::ExitCode = status.into();
-            return Self::Windows(err);
-        }
-        panic!("Cannot convert exit status to error on this platform");
+        Self::Unix(status.into())
+    }
+}
+
+#[cfg(all(feature = "std", windows))]
+impl From<std::process::ExitStatus> for ProcResult {
+    #[allow(unreachable_code)]
+    fn from(status: std::process::ExitStatus) -> Self {
+        Self::Windows(status.into())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_default_proc_result() {
+        use super::ProcResult;
+
+        let result = ProcResult::default();
+        assert!(
+            result.is_success(),
+            "Default ProcResult should indicate success"
+        );
     }
 }

@@ -7,7 +7,7 @@ use crate::raw::RawExitCode;
 use core::fmt::Display;
 
 /// A Windows-specific exit code.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 #[cfg_attr(
     feature = "serde",
     derive(serde::Serialize, serde::Deserialize),
