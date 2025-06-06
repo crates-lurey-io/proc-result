@@ -35,6 +35,34 @@ pub enum ProcResult {
 }
 
 impl ProcResult {
+    /// Creates a new `ProcResult` that represents a successful termination.
+    #[cfg(all(feature = "std", unix))]
+    #[must_use]
+    pub fn default_success() -> Self {
+        Self::Unix(unix::WaitStatus::default())
+    }
+
+    /// Creates a new `ProcResult` that represents a successful termination.
+    #[cfg(all(feature = "std", windows))]
+    #[must_use]
+    pub fn default_success() -> Self {
+        Self::Windows(windows::ExitCode::default())
+    }
+
+    /// Creates a new `ProcResult` that represents a non-zero exit code.
+    #[cfg(all(feature = "std", unix))]
+    #[must_use]
+    pub fn default_failure() -> Self {
+        Self::Unix(unix::WaitStatus::from_raw(1)) // Non-zero exit code
+    }
+
+    /// Creates a new `ProcResult` that represents a non-zero exit code.
+    #[cfg(all(feature = "std", windows))]
+    #[must_use]
+    pub fn default_failure() -> Self {
+        Self::Windows(windows::ExitCode::from_raw(1)) // Non-zero exit code
+    }
+
     /// Returns a result that is `Ok` if the exit code or status indicates a success.
     ///
     /// # Errors
@@ -61,20 +89,6 @@ impl ProcResult {
     #[must_use]
     pub fn is_failure(&self) -> bool {
         !self.is_success()
-    }
-}
-
-#[cfg(all(feature = "std", unix))]
-impl Default for ProcResult {
-    fn default() -> Self {
-        Self::Unix(unix::WaitStatus::default())
-    }
-}
-
-#[cfg(all(feature = "std", windows))]
-impl Default for ProcResult {
-    fn default() -> Self {
-        Self::Windows(windows::ExitCode::default())
     }
 }
 
@@ -110,13 +124,19 @@ impl From<std::process::ExitStatus> for ProcResult {
 mod tests {
     #[test]
     #[cfg(feature = "std")]
-    fn test_default_proc_result() {
+    fn test_default_success_proc_result() {
         use super::ProcResult;
 
-        let result = ProcResult::default();
-        assert!(
-            result.is_success(),
-            "Default ProcResult should indicate success"
-        );
+        let result = ProcResult::default_success();
+        assert!(result.is_success());
+    }
+
+    #[test]
+    #[cfg(feature = "std")]
+    fn test_default_failure_proc_result() {
+        use super::ProcResult;
+
+        let result = ProcResult::default_failure();
+        assert!(result.is_failure());
     }
 }
